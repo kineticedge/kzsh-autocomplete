@@ -1,0 +1,181 @@
+#compdef kafka-console-producer
+
+function _extract_arg() {
+  local arg=$1
+  local index=1
+  while [[ $index -le ${#words[@]} ]]; do
+    if [[ ${words[$index]} == $1 ]]; then
+      echo "${words[$((index + 1))]}"
+      return
+    fi
+    ((index++))
+  done
+}
+
+function _groups() {
+  local BROKER=$(_extract_arg "--bootstrap-server")
+  local CONFIG_FILE=$(_extract_arg "--producer.config")
+  local -a COMMAND=(--bootstrap-server "$BROKER")
+  if [[ -n "$CONFIG_FILE" ]]; then
+    COMMAND+=(--command-config "$CONFIG_FILE")
+  fi
+  local -a groups
+  if [[ -x "$(command -v kaflist)" ]]; then
+    groups=($(kaflist groups "${COMMAND[@]}"))
+  elif [[ -x "$(command -v kafka-consumer-groups)" ]]; then
+    groups=($(kafka-consumer-groups "${COMMAND[@]}" --list 2>/dev/null))
+  elif [[ -x "$(command -v kafka-consumer-groups.sh)" ]]; then
+    groups=($(kafka-consumer-groups.sh "${COMMAND[@]}" --list 2>/dev/null))
+  else
+    groups=()
+  fi
+  compadd ${groups[@]}
+}
+
+
+function _topics() {
+  local BROKER=$(_extract_arg "--bootstrap-server")
+  local CONFIG_FILE=$(_extract_arg "--producer.config")
+  local -a COMMAND=(--bootstrap-server "$BROKER")
+  if [[ -n "$CONFIG_FILE" ]]; then
+    COMMAND+=(--command-config "$CONFIG_FILE")
+  fi
+  local -a topics
+  if [[ -x "$(command -v kaflist)" ]]; then
+    topics=($(kaflist topics "${COMMAND[@]}"))
+  elif [[ -x "$(command -v kafka-topics)" ]]; then
+    topics=($(kafka-topics "${COMMAND[@]}" --list 2>/dev/null))
+  elif [[ -x "$(command -v kafka-topics.sh)" ]]; then
+    topics=($(kafka-topics.sh "${COMMAND[@]}" --list 2>/dev/null))
+  else
+    topics=()
+  fi
+  compadd ${topics[@]}
+}
+
+
+function _serializer() {
+  local configs=(
+    "org.apache.kafka.common.serialization.BooleanSerializer"
+    "org.apache.kafka.common.serialization.ByteBufferSerializer"
+    "org.apache.kafka.common.serialization.BytesSerializer"
+    "org.apache.kafka.common.serialization.DoubleSerializer"
+    "org.apache.kafka.common.serialization.FloatSerializer"
+    "org.apache.kafka.common.serialization.IntegerSerializer"
+    "org.apache.kafka.common.serialization.ListSerializer"
+    "org.apache.kafka.common.serialization.LongSerializer"
+    "org.apache.kafka.common.serialization.ShortSerializer"
+    "org.apache.kafka.common.serialization.StringSerializer"
+    "org.apache.kafka.common.serialization.UUIDSerializer"
+    "org.apache.kafka.common.serialization.VoidSerializer"
+  )
+  compadd "${configs[@]}"
+}
+
+
+function _properties() {
+  local configs=(
+    "parse.key"
+    "parse.headers"
+    "ignore.error"
+    "key.separator"
+    "headers.delimiter"
+    "headers.separator"
+    "headers.key.separator"
+    "null.marker"
+  )
+  compadd -S "=" "${configs[@]}"
+}
+
+
+function _producer_configs() {
+  local configs=(
+    "acks"
+    "batch.size"
+    "bootstrap.servers"
+    "buffer.memory"
+    "client.id"
+    "compression.type"
+    "connections.max.idle.ms"
+    "delivery.timeout.ms"
+    "enable.idempotence"
+    "interceptor.classes"
+    "key.serializer"
+    "linger.ms"
+    "max.block.ms"
+    "max.in.flight.requests.per.connection"
+    "max.request.size"
+    "metadata.max.age.ms"
+    "metadata.max.idle.ms"
+    "metric.reporters"
+    "metrics.num.samples"
+    "metrics.recording.level"
+    "metrics.sample.window.ms"
+    "partitioner.class"
+    "receive.buffer.bytes"
+    "reconnect.backoff.max.ms"
+    "reconnect.backoff.ms"
+    "request.timeout.ms"
+    "retries"
+    "retry.backoff.ms"
+    "sasl.jaas.config"
+    "sasl.kerberos.service.name"
+    "sasl.mechanism"
+    "security.protocol"
+    "send.buffer.bytes"
+    "ssl.key.password"
+    "ssl.keystore.location"
+    "ssl.keystore.password"
+    "ssl.truststore.location"
+    "ssl.truststore.password"
+    "ssl.enabled.protocols"
+    "ssl.endpoint.identification.algorithm"
+    "ssl.cipher.suites"
+    "ssl.keymanager.algorithm"
+    "ssl.secure.random.implementation"
+    "ssl.trustmanager.algorithm"
+    "transaction.timeout.ms"
+    "transactional.id"
+    "value.serializer"
+  )
+  compadd -S "=" "${configs[@]}"
+}
+
+
+_script() {
+
+  local context state
+
+_arguments -S -s : \
+  '--batch-size[ Number of messages to send in a single batch if they are not being sent synchronously. please note that this option will be replaced if max- partition-memory-bytes is also set (default: 16384).]:integer' \
+  '--bootstrap-server[ the Kafka server to connect to.]:server:->bootstrap-server' \
+  '--compression-codec[ The compression codec: either `none`, `gzip`, `snappy`, `lz4`, or `zstd`. If specified without value, then it defaults to 'gzip'.]:string' \
+  '--line-reader[ The class name of the class to use for reading lines from standard in. By default each line is read as a separate message. (default: kafka.tools.ConsoleProducer$LineMessageReader).]:string' \
+  '--max-block-ms[ The max time that the producer will block for during a send request. (default: 60000).]:long' \
+  '--max-memory-bytes[ The total memory used by the producer to buffer records waiting to be sent to the server. This is the option to control `buffer.memory` in producer configs. (default: 33554432).]:long' \
+  '--max-partition-memory-bytes[ The buffer size allocated for a partition. When records are received which are smaller than this size the producer will attempt to optimistically group them together until this size is reached. This is the option to control `batch.size` in producer configs. (default: 16384).]:integer' \
+  '--message-send-max-retries[ Brokers can fail receiving the message for multiple reasons, and being unavailable transiently is just one of them. This property specifies the number of retries before the producer give up and drop this message. This is the option to control `retries` in producer configs. (default: 3).]:integer' \
+  '--metadata-expiry-ms[ The period of time in milliseconds after which we force a refresh of metadata even if we have not seen any leadership changes. This is the option to control `metadata.max.age. ms` in producer configs. (default: 300000).]:long' \
+  '*--producer-property[ .]:producer_config:_producer_configs' \
+  '--producer.config[ Producer config properties file. Note that `producer-property` takes precedence over this config.]:file:_files' \
+  '*--property[ A mechanism to pass user-defined properties in the form key=value to the message reader. This allows custom configuration for a user-defined message reader.]:property:_properties' \
+  '--reader-config[ Config properties file for the message reader. Note that `property` takes precedence over this config.]:file:_files' \
+  '--request-required-acks[ The required `acks` of the producer requests (default: -1).]:string' \
+  '--request-timeout-ms[ The ack timeout of the producer requests. Value must be non-negative and non-zero. (default: 1500).]:long' \
+  '--retry-backoff-ms[ Before each retry, the producer refreshes the metadata of relevant topics. Since leader election takes a bit of time, this property specifies the amount of time that the producer waits before refreshing the metadata. This is the option to control `retry.backoff.ms` in producer configs. (default: 100).]:long' \
+  '--socket-buffer-size[ The size of the tcp RECV size. This is the option to control `send.buffer. bytes` in producer configs. (default: 102400).]:string' \
+  '--sync[ If set message send requests to the brokers are synchronously, one at a time as they arrive.]' \
+  '--timeout[ If set and the producer is running in asynchronous mode, this gives the maximum amount of time a message will queue awaiting sufficient batch size. The value is given in ms. This is the option to control `linger.ms` in producer configs. (default: 1000).]:timeout' \
+  '--topic[ The topic to produce message to.]:topic:_topics' \
+  '--version[ display Kafka version.]' && ret=0
+
+  case $state in
+    (bootstrap-server)
+      compadd "localhost:9092"
+      ;;
+  esac
+
+  return $ret
+}
+
+_script "$@"

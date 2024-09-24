@@ -1,0 +1,151 @@
+#compdef kafka-consumer-groups
+
+function _extract_arg() {
+  local arg=$1
+  local index=1
+  while [[ $index -le ${#words[@]} ]]; do
+    if [[ ${words[$index]} == $1 ]]; then
+      echo "${words[$((index + 1))]}"
+      return
+    fi
+    ((index++))
+  done
+}
+
+function _groups() {
+  local BROKER=$(_extract_arg "--bootstrap-server")
+  local CONFIG_FILE=$(_extract_arg "--command-config")
+  local -a COMMAND=(--bootstrap-server "$BROKER")
+  if [[ -n "$CONFIG_FILE" ]]; then
+    COMMAND+=(--command-config "$CONFIG_FILE")
+  fi
+  local -a groups
+  if [[ -x "$(command -v kaflist)" ]]; then
+    groups=($(kaflist groups "${COMMAND[@]}"))
+  elif [[ -x "$(command -v kafka-consumer-groups)" ]]; then
+    groups=($(kafka-consumer-groups "${COMMAND[@]}" --list 2>/dev/null))
+  elif [[ -x "$(command -v kafka-consumer-groups.sh)" ]]; then
+    groups=($(kafka-consumer-groups.sh "${COMMAND[@]}" --list 2>/dev/null))
+  else
+    groups=()
+  fi
+  compadd ${groups[@]}
+}
+
+function _topics() {
+  local BROKER=$(_extract_arg "--bootstrap-server")
+  local CONFIG_FILE=$(_extract_arg "--command-config")
+  local -a COMMAND=(--bootstrap-server "$BROKER")
+  if [[ -n "$CONFIG_FILE" ]]; then
+    COMMAND+=(--command-config "$CONFIG_FILE")
+  fi
+  local -a topics
+  if [[ -x "$(command -v kaflist)" ]]; then
+    topics=($(kaflist topics "${COMMAND[@]}"))
+  elif [[ -x "$(command -v kafka-topics)" ]]; then
+    topics=($(kafka-topics "${COMMAND[@]}" --list 2>/dev/null))
+  elif [[ -x "$(command -v kafka-topics.sh)" ]]; then
+    topics=($(kafka-topics.sh "${COMMAND[@]}" --list 2>/dev/null))
+  else
+    topics=()
+  fi
+  compadd ${topics[@]}
+}
+
+
+
+# arguments that should be treated as 'commands' as additional options depend on which of these is selected.
+#
+# --list
+# --describe
+# --delete
+# --reset-offsets
+# --delete-offsets
+
+_script() {
+
+  local context state arguments
+
+  arguments=(
+      '--bootstrap-server[ the Kafka server to connect to.]:server:->bootstrap-server'
+      '--command-config[ property-file containing configs to be passed to Admin Client and Consumer.]:file:_files'
+      '(--delete --delete-offsets --describe --list --reset-offsets --version)'--delete'[ pass in groups to delete topic partition offsets and ownership information over the entire consumer group.]'
+      '(--delete --delete-offsets --describe --list --reset-offsets --version)'--delete-offsets'[ delete offsets of consumer group. Supports one consumer group at the time, and multiple  topics.]'
+      '(--delete --delete-offsets --describe --list --reset-offsets --version)'--describe'[ describe consumer group and list offset lag (number of messages not yet processed) related to given group.]'
+      '(--delete --delete-offsets --describe --list --reset-offsets --version)'--list'[ list all available groups.]'
+      '(--delete --delete-offsets --describe --list --reset-offsets --version)'--reset-offsets'[ reset offsets of consumer group.]'
+      '(--delete --delete-offsets --describe --list --reset-offsets --version)'--version'[ display Kafka version.]'
+
+      '--timeout[ the timeout that can be set for some use cases, default: 5000.]:timeout'
+  )
+
+  if (( words[(Ie)--delete] )); then
+    arguments+=(
+      '--all-groups[ Apply to all consumer groups.]'
+      '--all-topics[ Apply to all topics.]'
+      '*--group[ The consumer group we wish to act on.]:group:_groups'
+      '*--topic[ the topic whose consumer group information should be deleted or topic whose should be included in the reset offset process.]:topic:_topics'
+    )
+  fi
+
+  if (( words[(Ie)--delete-offsets] )); then
+    arguments+=(
+      '--group[ The consumer group we wish to act on.]:group:_groups'
+      '--all-topics[ Apply to all topics.]'
+      '*--topic[ the topic whose consumer group information should be deleted or topic whose should be included in the reset offset process.]:topic:_topics'
+    )
+  fi
+
+  if (( words[(Ie)--describe] )); then
+    arguments+=(
+      '--all-groups[ Apply to all consumer groups.]'
+      '*--group[ The consumer group we wish to act on.]:group:_groups'
+
+      '(--offsets --members --state)'--offsets'[ describe the group and list all topic partitions in the group along with their offset lag. This is the default sub-action of and may be used with `--describe` and `-- bootstrap-server` options only.]'
+      '(--offsets --members --state)'--members'[ describe members of the group, supported operation: describe]'
+      '(--offsets --members --state)'--state'[ with --describe, includes state of the groups; with --list, use to list groups with specific states.]:state'
+
+      '--verbose[ provide additional information, if any, when describing the group.]'
+    )
+  fi
+
+  if (( words[(Ie)--list] )); then
+    arguments+=(
+      '--state[ with --describe, includes state of the groups; with --list, use to list groups with specific states.]:state'
+    )
+  fi
+
+  if (( words[(Ie)--reset-offsets] )); then
+    arguments+=(
+      '--all-groups[ Apply to all consumer groups.]'
+      '--all-topics[ Apply to all topics.]'
+      '*--group[ The consumer group we wish to act on.]:group:_groups'
+      '*--topic[ the topic whose consumer group information should be deleted or topic whose should be included in the reset offset process.]:topic:_topics'
+      '--by-duration[ Reset offsets to offset by duration from current timestamp. Format: `PnDTnHnMnS`]:duration'
+      '--all-topics[ Consider all topics assigned to a group in the _reset-offsets_ process.]'
+      '--dry-run[ only show results without executing change, supported operation: reset-offsets.]'
+      '--execute[ execute operation, supported operations: reset-offsets.]'
+      '--from-file[ reset offsets to values defined in CSV file.]:file:_files'
+      '--export[ export operation execution to a CSV file, supported operations: reset-offsets.]:file:_files'
+
+      '--shift-by[ reset offsets shifting current offset by 'n', where 'n' can be positive or negative.]:shift_by'
+      '--to-current[ reset offsets to current offset.]'
+      '--to-datetime[ reset offsets to offset from datetime, format: `YYYY-MM-DDTHH:mm:SS.sss`.]:to_datetime'
+      '--to-earliest[ reset offsets to earliest offset.]'
+      '--to-latest[ reset offsets to latest offset.]'
+      '--to-offset[ Reset offsets to a specific offset.]:to_offset'
+    )
+  fi
+
+  _arguments -C "${arguments[@]}" && ret=0
+
+  case $state in
+    (bootstrap-server)
+      compadd "localhost:9092"
+      ;;
+  esac
+
+  return $ret
+}
+
+_script "$@"

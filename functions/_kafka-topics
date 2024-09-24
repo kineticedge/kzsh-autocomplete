@@ -1,0 +1,153 @@
+#compdef kafka-topics
+
+function _extract_arg() {
+  local arg=$1
+  local index=1
+  while [[ $index -le ${#words[@]} ]]; do
+    if [[ ${words[$index]} == $1 ]]; then
+      echo "${words[$((index + 1))]}"
+      return
+    fi
+    ((index++))
+  done
+}
+
+function _topics() {
+  local BROKER=$(_extract_arg "--bootstrap-server")
+  local CONFIG_FILE=$(_extract_arg "--command-config")
+  local -a COMMAND=(--bootstrap-server "$BROKER")
+  if [[ -n "$CONFIG_FILE" ]]; then
+    COMMAND+=(--command-config "$CONFIG_FILE")
+  fi
+  local -a topics
+  if [[ -x "$(command -v kaflist)" ]]; then
+    topics=($(kaflist topics "${COMMAND[@]}"))
+  elif [[ -x "$(command -v kafka-topics)" ]]; then
+    topics=($(kafka-topics "${COMMAND[@]}" --list 2>/dev/null))
+  elif [[ -x "$(command -v kafka-topics.sh)" ]]; then
+    topics=($(kafka-topics.sh "${COMMAND[@]}" --list 2>/dev/null))
+  else
+    topics=()
+  fi
+  compadd ${topics[@]}
+}
+
+function _configs() {
+  local configs=(
+    "cleanup.policy"
+    "compression.type"
+    "delete.retention.ms"
+    "file.delete.delay.ms"
+    "flush.messages"
+    "flush.ms"
+    "follower.replication.throttled.replicas"
+    "index.interval.bytes"
+    "leader.replication.throttled.replicas"
+    "local.retention.bytes"
+    "local.retention.ms"
+    "max.compaction.lag.ms"
+    "max.message.bytes"
+    "message.downconversion.enable"
+    "message.format.version"
+    "message.timestamp.difference.max.ms"
+    "message.timestamp.type"
+    "min.cleanable.dirty.ratio"
+    "min.compaction.lag.ms"
+    "min.insync.replicas"
+    "preallocate"
+    "remote.storage.enable"
+    "retention.bytes"
+    "retention.ms"
+    "segment.bytes"
+    "segment.index.bytes"
+    "segment.jitter.ms"
+    "segment.ms"
+    "unclean.leader.election.enable"
+  )
+
+  compadd -S "=" "${configs[@]}"
+}
+
+# arguments that should be treated as 'commands' as additional options depend on which of these is selected.
+#
+# --list
+# --create
+# --alter
+# --delete
+# --describe
+
+_script() {
+
+ local context state arguments
+
+ arguments=(
+  '--bootstrap-server[ the Kafka server to connect to.]:server:->bootstrap-server'
+  '--command-config[ property file containing configs to be passed to Admin Client.]:file:_files'
+  '(--alter --create --delete --describe --list --version)'--alter'[ alter the number of partitions, replica assignment, and/or configuration for the topic.]'
+  '(--alter --create --delete --describe --list --version)'--create'[ create a new topic.]'
+  '(--alter --create --delete --describe --list --version)'--delete'[ delete a topic]'
+  '(--alter --create --delete --describe --list --version)'--describe'[ list details for the given topics.]'
+  '(--alter --create --delete --describe --list --version)'--list'[ list all available topics.]'
+  '(--alter --create --delete --describe --list --version)'--version'[ display kafka version.]'
+  )
+
+  # Add conditional argument
+  if (( words[(Ie)--alter] )); then
+    arguments+=(
+      '--if-exists[ if set when altering or deleting or describing topics, the action will only execute if the topic exists.]'
+      '--partitions[ the number of partitions for the topic being created or altered.]:file:_files'
+      '--replica-assignment[ a list of manual partition-to-broker assignments for the topic being created or altered.]:file:_files'
+      '--topic[ the topic to create, alter, describe or delete.]:topic:_topics'
+      '--disable-rack-aware[ disable rack aware replica assignment.]'
+    )
+  fi
+  if (( words[(Ie)--create] )); then
+    arguments+=(
+      '*--config[ a topic configuration override for the topic being created or altered.]:config:_configs'
+      '--if-not-exists[ if set when creating topics, the action will only execute if the topic does not already exist.]'
+      '--partitions[ the number of partitions for the topic being created or altered.]:file:_files'
+      '--replica-assignment[ a list of manual partition-to-broker assignments for the topic being created or altered.]:file:_files'
+      '--replication-factor[ the replication factor for each partition in the topic being created.]:file:_files'
+      '--topic[ the topic to create, alter, describe or delete.]:topic:_topics'
+      '--disable-rack-aware[ disable rack aware replica assignment.]'
+    )
+  fi
+  if (( words[(Ie)--delete] )); then
+    arguments+=(
+      '--delete-config[a topic configuration override to be removed for an existing topic.]:file:_files'
+      '--if-exists[ if set when altering or deleting or describing topics, the action will only execute if the topic exists.]'
+      '--topic[ the topic to create, alter, describe or delete.]:topic:_topics'
+    )
+  fi
+  if (( words[(Ie)--describe] )); then
+    arguments+=(
+      '--at-min-isr-partitions[ if set when describing topics, only show partitions whose isr count is equal to the configured minimum.]'
+      '--exclude-internal[ exclude internal topics when running list or describe command.]'
+      '--topic-id[ the topic-id to describe.]:topic:_topics'
+      '--topics-with-overrides[ if set when describing topics, only show topics that have overridden configs.]'
+      '--unavailable-partitions[ if set when describing topics, only show partitions whose leader is not available.]'
+      '--under-min-isr-partitions[ if set when describing topics, only show partitions whose isr count is less than the configured minimum.]'
+      '--under-replicated-partitions[ if set when describing topics, only show under replicated partitions.]'
+      '--topic[ the topic to create, alter, describe or delete.]:topic:_topics'
+    )
+  fi
+  if (( words[(Ie)--list] )); then
+    arguments+=(
+      '--exclude-internal[ exclude internal topics when running list or describe command.]'
+    )
+  fi
+
+  _arguments -C "${arguments[@]}" && ret=0
+
+  case $state in
+    (bootstrap-server)
+      compadd "localhost:9092"
+      ;;
+  esac
+
+  return $ret
+}
+
+_script "$@"
+
+
