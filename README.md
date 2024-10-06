@@ -127,6 +127,25 @@ source ~/.zshrc
 rehash
 ```
 
+## Troubleshooting
+
+* Make sure `fpath` is defined before enabling autcomplete `compinit`.
+
+* If you make changes to path or function path to a running zsh, try `rehash` to rebuild the internal hash table for commands.
+
+* `unfunction _kafka-topics` will unload a function, and `autoload -Uz _kafka-topics` would then reapply; this is useful if a command is changed.
+
+* `declare -f _kafka-topics` will list the function, before the function is used it should be a lazy defined, function as follows:
+
+```shell
+_kafka-topics () {
+        # undefined
+        builtin autoload -XUz
+}
+```
+
+once the function as been used/loaded, `declare -f _kafka-topics` will show the actual function.
+  
 
 ## Supported Auto-Complete Functions
 
@@ -137,4 +156,6 @@ rehash
 ### **kafka-console-consumer**
 
 ### **kafka-console-producer**
+
+### **kafka-configs**
 

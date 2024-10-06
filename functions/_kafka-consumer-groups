@@ -81,25 +81,25 @@ _script() {
 
   if (( words[(Ie)--delete] )); then
     arguments+=(
-      '--all-groups[ Apply to all consumer groups.]'
-      '--all-topics[ Apply to all topics.]'
-      '*--group[ The consumer group we wish to act on.]:group:_groups'
+      '--all-groups[ apply to all consumer groups.]'
+      '--all-topics[ apply to all topics.]'
+      '*--group[ the consumer group we wish to act on.]:group:_groups'
       '*--topic[ the topic whose consumer group information should be deleted or topic whose should be included in the reset offset process.]:topic:_topics'
     )
   fi
 
   if (( words[(Ie)--delete-offsets] )); then
     arguments+=(
-      '--group[ The consumer group we wish to act on.]:group:_groups'
-      '--all-topics[ Apply to all topics.]'
+      '--group[ the consumer group we wish to act on.]:group:_groups'
+      '--all-topics[ apply to all topics.]'
       '*--topic[ the topic whose consumer group information should be deleted or topic whose should be included in the reset offset process.]:topic:_topics'
     )
   fi
 
   if (( words[(Ie)--describe] )); then
     arguments+=(
-      '--all-groups[ Apply to all consumer groups.]'
-      '*--group[ The consumer group we wish to act on.]:group:_groups'
+      '--all-groups[ apply to all consumer groups.]'
+      '*--group[ the consumer group we wish to act on.]:group:_groups'
 
       '(--offsets --members --state)'--offsets'[ describe the group and list all topic partitions in the group along with their offset lag. This is the default sub-action of and may be used with `--describe` and `-- bootstrap-server` options only.]'
       '(--offsets --members --state)'--members'[ describe members of the group, supported operation: describe]'
@@ -117,12 +117,12 @@ _script() {
 
   if (( words[(Ie)--reset-offsets] )); then
     arguments+=(
-      '--all-groups[ Apply to all consumer groups.]'
-      '--all-topics[ Apply to all topics.]'
-      '*--group[ The consumer group we wish to act on.]:group:_groups'
+      '--all-groups[ apply to all consumer groups.]'
+      '--all-topics[ apply to all topics.]'
+      '*--group[ the consumer group we wish to act on.]:group:_groups'
       '*--topic[ the topic whose consumer group information should be deleted or topic whose should be included in the reset offset process.]:topic:_topics'
-      '--by-duration[ Reset offsets to offset by duration from current timestamp. Format: `PnDTnHnMnS`]:duration'
-      '--all-topics[ Consider all topics assigned to a group in the _reset-offsets_ process.]'
+      '--by-duration[ reset offsets to offset by duration from current timestamp. Format: `PnDTnHnMnS`]:duration'
+      '--all-topics[ consider all topics assigned to a group in the _reset-offsets_ process.]'
       '--dry-run[ only show results without executing change, supported operation: reset-offsets.]'
       '--execute[ execute operation, supported operations: reset-offsets.]'
       '--from-file[ reset offsets to values defined in CSV file.]:file:_files'
@@ -133,7 +133,7 @@ _script() {
       '--to-datetime[ reset offsets to offset from datetime, format: `YYYY-MM-DDTHH:mm:SS.sss`.]:to_datetime'
       '--to-earliest[ reset offsets to earliest offset.]'
       '--to-latest[ reset offsets to latest offset.]'
-      '--to-offset[ Reset offsets to a specific offset.]:to_offset'
+      '--to-offset[ reset offsets to a specific offset.]:to_offset'
     )
   fi
 

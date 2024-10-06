@@ -1,0 +1,393 @@
+#compdef kafka-configs
+
+# Configurations for topics
+topic_configs=(
+  "cleanup.policy"
+  "compression.type"
+  "delete.retention.ms"
+  "file.delete.delay.ms"
+  "flush.messages"
+  "flush.ms"
+  "follower.replication.throttled.replicas"
+  "index.interval.bytes"
+  "leader.replication.throttled.replicas"
+  "local.retention.bytes"
+  "local.retention.ms"
+  "max.compaction.lag.ms"
+  "max.message.bytes"
+  "message.downconversion.enable"
+  "message.format.version"
+  "message.timestamp.difference.max.ms"
+  "message.timestamp.type"
+  "min.cleanable.dirty.ratio"
+  "min.compaction.lag.ms"
+  "min.insync.replicas"
+  "preallocate"
+  "remote.storage.enable"
+  "retention.bytes"
+  "retention.ms"
+  "segment.bytes"
+  "segment.index.bytes"
+  "segment.jitter.ms"
+  "segment.ms"
+  "unclean.leader.election.enable"
+)
+
+# Configurations for brokers
+broker_configs=(
+  "advertised.listeners"
+  "background.threads"
+  "broker.id"
+  "compression.type"
+  "connections.max.idle.ms"
+  "default.replication.factor"
+  "delete.topic.enable"
+  "fetch.purgatory.purge.interval.requests"
+  "group.initial.rebalance.delay.ms"
+  "inter.broker.listener.name"
+  "listener.security.protocol.map"
+  "log.dirs"
+  "log.retention.check.interval.ms"
+  "max.connections.per.ip"
+  "message.max.bytes"
+  "metric.reporters"
+  "num.io.threads"
+  "num.network.threads"
+  "num.partitions"
+  "transaction.state.log.replication.factor"
+  "zookeeper.connect"
+)
+
+# Configurations for users
+user_configs=(
+  "SCRAM-SHA-256"
+  "SCRAM-SHA-512"
+  "consumer_byte_rate"
+  "controller_mutation_rate"
+  "producer_byte_rate"
+  "request_percentage"
+)
+
+# Configurations for clients
+client_configs=(
+  "consumer_byte_rate"
+  "controller_mutation_rate"
+  "producer_byte_rate"
+  "request_percentage"
+)
+
+# Configurations for IPs
+ip_configs=(
+  "connection_creation_rate"
+)
+
+all_configs=("${topic_configs[@]}" "${broker_configs[@]}")
+
+
+function _extract_arg() {
+  local arg=$1
+  local index=1
+  while [[ $index -le ${#words[@]} ]]; do
+    if [[ ${words[$index]} == $1 ]]; then
+      echo "${words[$((index + 1))]}"
+      return
+    fi
+    ((index++))
+  done
+}
+
+
+function _append_equal() {
+  compadd -S '=' -- "$@"
+}
+
+function _entity_type() {
+  local configs=(
+    "topics"
+    "brokers"
+    "broker-loggers"
+    "users"
+    "clients"
+    "ips"
+  )
+  compadd "${configs[@]}"
+}
+
+function __topics() {
+  local BROKER=$(_extract_arg "--bootstrap-server")
+  local CONFIG_FILE=$(_extract_arg "--command-config")
+  local -a COMMAND=(--bootstrap-server "$BROKER")
+  if [[ -n "$CONFIG_FILE" ]]; then
+    COMMAND+=(--command-config "$CONFIG_FILE")
+  fi
+  local -a topics
+  if [[ -x "$(command -v kaflist)" ]]; then
+    topics=($(kaflist topics "${COMMAND[@]}"))
+  elif [[ -x "$(command -v kafka-topics)" ]]; then
+    topics=($(kafka-topics "${COMMAND[@]}" --list 2>/dev/null))
+  elif [[ -x "$(command -v kafka-topics.sh)" ]]; then
+    topics=($(kafka-topics.sh "${COMMAND[@]}" --list 2>/dev/null))
+  else
+    topics=()
+  fi
+  echo ${topics[@]}
+}
+
+function _topics() {
+  local -a topics=($(__topics))
+  compadd ${topics[@]}
+}
+
+function __principals() {
+  local BROKER=$(_extract_arg "--bootstrap-server")
+  local CONFIG_FILE=$(_extract_arg "--command-config")
+  local -a COMMAND=(--bootstrap-server "$BROKER")
+  if [[ -n "$CONFIG_FILE" ]]; then
+    COMMAND+=(--command-config "$CONFIG_FILE")
+  fi
+  local -a principals
+  if [[ -x "$(command -v kaflist)" ]]; then
+    principals=($(kaflist principals "${COMMAND[@]}"))
+  else
+    principals=()
+  fi
+  echo ${principals[@]}
+}
+
+function _principals() {
+  local -a principals=($(__principals))
+  compadd ${principals[@]}
+}
+
+
+function __brokers() {
+  local BROKER=$(_extract_arg "--bootstrap-server")
+  local CONFIG_FILE=$(_extract_arg "--command-config")
+  local -a COMMAND=(--bootstrap-server "$BROKER")
+  if [[ -n "$CONFIG_FILE" ]]; then
+    COMMAND+=(--command-config "$CONFIG_FILE")
+  fi
+  local -a brokers
+  if [[ -x "$(command -v kaflist)" ]]; then
+    brokers=($(kaflist brokers "${COMMAND[@]}"))
+  else
+    brokers=()
+  fi
+  echo ${brokers[@]}
+}
+
+function _brokers() {
+  local -a brokers=($(__brokers))
+  compadd ${brokers[@]}
+}
+
+function __clients() {
+  local BROKER=$(_extract_arg "--bootstrap-server")
+  local CONFIG_FILE=$(_extract_arg "--command-config")
+  local -a COMMAND=(--bootstrap-server "$BROKER")
+  if [[ -n "$CONFIG_FILE" ]]; then
+    COMMAND+=(--command-config "$CONFIG_FILE")
+  fi
+  local -a clients
+  if [[ -x "$(command -v kaflist)" ]]; then
+    clients=($(kaflist client-ids "${COMMAND[@]}"))
+  else
+    clients=()
+  fi
+  echo ${clients[@]}
+}
+
+function _clients() {
+  local -a clients=($(__clients))
+  compadd ${clients[@]}
+}
+
+function __ips() {
+  local BROKER=$(_extract_arg "--bootstrap-server")
+  local CONFIG_FILE=$(_extract_arg "--command-config")
+  local -a COMMAND=(--bootstrap-server "$BROKER")
+  if [[ -n "$CONFIG_FILE" ]]; then
+    COMMAND+=(--command-config "$CONFIG_FILE")
+  fi
+  local -a ips
+  if [[ -x "$(command -v kaflist)" ]]; then
+    ips=($(kaflist ips "${COMMAND[@]}"))
+  else
+    ips=()
+  fi
+  echo ${ips[@]}
+}
+
+function _ips() {
+  local -a ips=($(__ips))
+  compadd ${ips[@]}
+}
+
+function _entities() {
+  local TYPE=$(_extract_arg "--entity-type")
+  local -a entities
+  if [[ "$TYPE" == "topics" ]]; then
+    entities=($(__topics))
+  elif [[ "$TYPE" == "brokers" || "$TYPE" == "broker-loggers" ]]; then
+    entities=($(__brokers))
+  elif [[ "$TYPE" == "users" ]]; then
+    entities=($(__principals))
+  elif [[ "$TYPE" == "clients" ]]; then
+    entities=($(__clients))
+  elif [[ "$TYPE" == "ips" ]]; then
+    entities=($(__ips))
+  else
+    entities=()
+  fi
+  compadd ${entities[@]}
+}
+
+# Autocomplete function for kafka-configs
+function _script() {
+  local context state line arguments
+  typeset -A opt_args
+
+ arguments=(
+    '--bootstrap-server[ the Kafka server to connect to.]:server:->bootstrap-server'
+    '--command-config[ property file containing configs to be passed to Admin Client.]:file:_files'
+    '(--alter --describe --version)'--alter'[ alter the configuration for the entity.]'
+    '(--alter --describe --version)'--describe'[ list configs for the given entity.]'
+    '(--alter --describe --version)'--version'[ display kafka version.]'
+    '(--entity-type --broker --broker-logger --client --ip --topic --user)'--entity-type'[ type of entity (topics/clients/users/brokers/broker-loggers/ips).]:entity_type:_entity_type'
+    '(--entity-type --broker --broker-logger --client --ip --topic --user)'--broker'[ the broker ID.]:broker:_brokers'
+    '(--entity-type --broker --broker-logger --client --ip --topic --user)'--broker-logger'[ the broker ID for its logger config.]:broker:_brokers'
+    '(--entity-type --broker --broker-logger --client --ip --topic --user)'--client'[ the client ID.]:client:_clients'
+    '(--entity-type --broker --broker-logger --client --ip --topic --user)'--ip'[ the IP address.]:ip:_ips'
+    '(--entity-type --broker --broker-logger --client --ip --topic --user)'--topic'[ the topic name.]:topic:_topics'
+    '(--entity-type --broker --broker-logger --client --ip --topic --user)'--user'[ the user principal name.]:principal:_principals'
+  )
+
+
+  if (( words[(Ie)--entity-type] )); then
+    arguments+=(
+      '--entity-name[ name of entity (topic name/client id/user principal name/broker id/ip)]:entity:_entities'
+      '--entity-default[ default entity name for clients/users/brokers/ips (applies to corresponding entity type in command line)]'
+    )
+  fi
+#  if (( words[(Ie)--broker] )); then
+#    arguments+=(
+#      '--broker-defaults[ The config defaults for all brokers.]'
+#    )
+#  fi
+#  if (( words[(Ie)--client] )); then
+#    arguments+=(
+#      '--client-defaults[ The config defaults for all clients.]'
+#    )
+#  fi
+#  if (( words[(Ie)--ip] )); then
+#    arguments+=(
+#      '--ip-defaults[ The config defaults for all IPs.]'
+#    )
+#  fi
+#  if (( words[(Ie)--user] )); then
+#    arguments+=(
+#      '--user-defaults[ The config defaults for all users.]'
+#    )
+#  fi
+  if (( words[(Ie)--alter] )); then
+    arguments+=(
+      '--add-config[ key-value pairs of configs to add.]:add-config:->config'
+      '--add-config-file[ path to a properties file with configs to add. See add-config for a list of valid configurations.]:file:files'
+      '--delete-config[ config keys to remove k1,k2]:delete-config:->config'
+      '--force[ suppress console prompts]'
+    )
+  fi
+  if (( words[(Ie)--describe] )); then
+    arguments+=(
+      '--all[ list all configs for the given topic, broker, or broker-logger entity (includes static configuration when the entity type is brokers).]'
+      '(--broker-defaults --client-defaults --ip-defaults --user-defaults)'--broker-defaults'[ the config defaults for all brokers.]'
+      '(--broker-defaults --client-defaults --ip-defaults --user-defaults)'--client-defaults'[ the config defaults for all clients.]'
+      '(--broker-defaults --client-defaults --ip-defaults --user-defaults)'--ip-defaults'[ the config defaults for all IPs.]'
+      '(--broker-defaults --client-defaults --ip-defaults --user-defaults)'--user-defaults'[ the config defaults for all users.]'
+    )
+  fi
+
+
+  _arguments -C "${arguments[@]}" && ret=0
+  
+  case $state in
+    (bootstrap-server)
+      compadd "localhost:9092"
+      ;;
+  esac
+
+  case $state in
+    config)
+      # todo delete-config ??
+      local existing_configs=("${(s:,:)opt_args[--add-config]}")
+
+      local values
+
+      if [[ ${words[(I)--entity-type]} -ne 0 ]]; then
+          case "${opt_args[--entity-type]}" in
+            brokers)
+              values=("${broker_configs[@]}")
+              ;;
+            topics)
+              values=("${topic_configs[@]}")
+              ;;
+            users)
+              values=("${user_configs[@]}")
+              ;;
+            clients)
+              values=("${client_configs[@]}")
+              ;;
+            ips)
+              values=("${ip_configs[@]}")
+              ;;
+            '') # Default case when entity-type is not yet defined
+              values=("${all_configs[@]}")
+              #_sequence _values 'config' "${all_configs[@]}"
+              ;;
+          esac
+      elif [[ ${words[(I)--brokers]} -ne 0 ]]; then
+        values=("${broker_configs[@]}")
+      elif [[ ${words[(I)--topic]} -ne 0 ]]; then
+        values=("${topic_configs[@]}")
+      elif [[ ${words[(I)--user]} -ne 0 ]]; then
+        values=("${user_configs[@]}")
+      elif [[ ${words[(I)--client]} -ne 0 ]]; then
+        values=("${client_configs[@]}")
+      elif [[ ${words[(I)--ip]} -ne 0 ]]; then
+        values=("${ip_configs[@]}")
+      fi
+
+      # Parse existing configurations: support for key=[value1,value2],key2=value2
+      local used_keys=()
+      for config in "${existing_configs[@]}"; do
+        used_keys+=("${config%%=*}")
+      done
+
+      # Filter out the already used configurations
+      local filtered_values=()
+      for val in "${values[@]}"; do
+        if [[ ! " ${used_keys[@]} " =~ " $val " ]]; then
+          filtered_values+=("$val")
+        fi
+      done
+
+      # Add '=' suffix to the filtered values
+      if (( ${#filtered_values[@]} )); then
+        if [[ ${words[(I)--add-config]} -ne 0 ]]; then
+            _sequence _describe 'configurations' filtered_values -S '='
+        elif [[ ${words[(I)--delete-config]} -ne 0 ]]; then
+            _sequence _describe 'configurations' filtered_values -S ''
+        else
+            # ???
+        fi
+      else
+        _message 'No more configurations to add'
+      fi
+      ;;
+
+  esac
+
+  return $ret
+}
+
+_script "$@"

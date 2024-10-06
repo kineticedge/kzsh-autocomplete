@@ -163,21 +163,21 @@ _arguments -S -s : \
   '--bootstrap-server[ the Kafka server to connect to.]:server:->bootstrap-server' \
   '*--consumer-property[ user-defined properties in the form of key=value to the consumer.]:config:_consumer_configs' \
   '--consumer.config[ consumer config property file.]:file:_files' \
-  '--enable-system-events[ Log lifecycle events of the consumer in addition to logging consumed messages. (This is specific for system tests.).]' \
-  '--formatter[ The name of a class to use for formatting kafka messages for display. (default: kafka.tools.DefaultMessageFormatter).]' \
-  '--formatter-config[ Config properties file to initialize the message formatter. Note that `property` takes precedence over this config.]:file:_files' \
-  '--from-beginning[ If the consumer does not already have an established offset to consume from, start with the earliest message present in the log rather than the latest message.]' \
-  '--group[ he consumer group id of the consumer.]:group:_groups' \
+  '--enable-system-events[ log lifecycle events of the consumer in addition to logging consumed messages. (This is specific for system tests.).]' \
+  '--formatter[ the name of a class to use for formatting kafka messages for display. (default: kafka.tools.DefaultMessageFormatter).]' \
+  '--formatter-config[ config properties file to initialize the message formatter. note that `property` takes precedence over this config.]:file:_files' \
+  '--from-beginning[ if the consumer does not already have an established offset to consume from, start with the earliest message present in the log rather than the latest message.]' \
+  '--group[ the consumer group id of the consumer.]:group:_groups' \
   '--include[ Regular expression specifying list of topics to include for consumption.]:regex' \
-  '--isolation-level[ Set to read_committed in order to filter out transactional messages which are not committed. Set to read_uncommitted to read all messages. (default: read_uncommitted).]:string' \
+  '--isolation-level[ set to read_committed in order to filter out transactional messages which are not committed. Set to read_uncommitted to read all messages. (default: read_uncommitted).]:string' \
   '--key-deserializer[ key deserializer.]:deserializer:_deserializer' \
-  '--max-messages[ he maximum number of messages to consume before exiting. If not set, consumption is continual.]:string' \
-  '--offset[ The offset to consume from (a non- negative number), or 'earliest' which means from beginning, or 'latest' which means from end (default: latest).]:string' \
-  '--partition[ The partition to consume from. Consumption starts from the end of the partition unless '--offset' is specified.]:string' \
-  '*--property[ The properties to initialize the message formatter.]:property:_properties' \
-  '--timeout-ms[ If specified, exit if no message is available for consumption for the specified interval.]:timeout' \
-  '--skip-message-on-error[ If there is an error when processing a message, skip it instead of halt.]' \
-  '--topic[ The topic to consume on.]:topic:_topics' \
+  '--max-messages[ the maximum number of messages to consume before exiting. If not set, consumption is continual.]:string' \
+  '--offset[ the offset to consume from (a non-negative number), or 'earliest' which means from beginning, or 'latest' which means from end (default: latest).]:string' \
+  '--partition[ the partition to consume from. Consumption starts from the end of the partition unless '--offset' is specified.]:string' \
+  '*--property[ the properties to initialize the message formatter.]:property:_properties' \
+  '--timeout-ms[ if specified, exit if no message is available for consumption for the specified interval.]:timeout' \
+  '--skip-message-on-error[ if there is an error when processing a message, skip it instead of halt.]' \
+  '--topic[ the topic to consume on.]:topic:_topics' \
   '--value-deserializer[ value deserializer.]:deserializer:_deserializer' \
   '--version[ display Kafka version.]' && ret=0
 

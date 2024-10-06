@@ -3,14 +3,19 @@ package io.kineticedge.cli;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.admin.ConsumerGroupListing;
+import org.apache.kafka.clients.admin.DescribeClientQuotasOptions;
+import org.apache.kafka.clients.admin.DescribeClusterResult;
 import org.apache.kafka.clients.admin.ListTopicsOptions;
 import org.apache.kafka.common.KafkaException;
 import org.apache.kafka.common.acl.AccessControlEntryFilter;
 import org.apache.kafka.common.acl.AclBindingFilter;
 import org.apache.kafka.common.config.ConfigException;
+import org.apache.kafka.common.config.ConfigResource;
+import org.apache.kafka.common.quota.ClientQuotaFilter;
 import org.apache.kafka.common.resource.ResourcePatternFilter;
 
 import java.io.FileInputStream;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -27,6 +32,7 @@ public class KafkaList {
   private static boolean debug = false;
 
   private static final ListTopicsOptions LIST_TOPICS_OPTIONS = new ListTopicsOptions().listInternal(true);
+
 
   public static void main(String[] args) {
 
@@ -68,6 +74,19 @@ public class KafkaList {
       case "principals":
       case "--principals":
         principals(config, timeoutMs).forEach(System.out::println);
+        break;
+      case "brokers":
+      case "--brokers":
+        brokers(config, timeoutMs).forEach(System.out::println);
+        break;
+      case "client-ids":
+      case "--client-ids":
+        clients("client-id", config, timeoutMs).forEach(System.out::println);
+        break;
+      case "ips":
+      case "--ips":
+        clients("ip", config, timeoutMs).forEach(System.out::println);
+        break;
       default:
     }
 
@@ -128,6 +147,31 @@ public class KafkaList {
       if (debug) {
         ce.printStackTrace();
       }
+      return Set.of();
+    }
+  }
+
+  private static Set<String> brokers(final Map<String, Object> config, final long timeoutMs) {
+    try (AdminClient adminClient = AdminClient.create(config)) {
+      return adminClient.describeCluster().nodes().get(timeoutMs, TimeUnit.MILLISECONDS).stream().map(n -> Integer.toString(n.id())).sorted().collect(Collectors.toCollection(LinkedHashSet::new));
+    } catch (InterruptedException | ExecutionException | TimeoutException e) {
+      if (debug) {
+        e.printStackTrace();
+      }
+      Thread.currentThread().interrupt();
+      return Set.of();
+    }
+  }
+
+  private static Set<String> clients(final String type, final Map<String, Object> config, final long timeoutMs) {
+    try (AdminClient adminClient = AdminClient.create(config)) {
+      return adminClient.describeClientQuotas(ClientQuotaFilter.all(), new DescribeClientQuotasOptions().timeoutMs((int) timeoutMs)).entities().get().keySet().stream()
+              .flatMap(v -> v.entries().entrySet().stream().filter(e -> type.equals(e.getKey())).map(Map.Entry::getValue)).sorted().collect(Collectors.toCollection(LinkedHashSet::new));
+    } catch (InterruptedException | ExecutionException e) {
+      if (debug) {
+        e.printStackTrace();
+      }
+      Thread.currentThread().interrupt();
       return Set.of();
     }
   }
